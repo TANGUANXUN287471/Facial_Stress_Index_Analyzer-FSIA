@@ -3,15 +3,22 @@ import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 from ttkbootstrap import Style
+from login import LoginWindow
+from register import RegisterWindow
 
 # Function to handle the login button click
 def login():
-    messagebox.showinfo("Login", "Login functionality will be implemented here.")
+    try:
+        subprocess.Popen(["python", "login.py"])
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
 # Function to handle the register button click
 def register():
-    messagebox.showinfo("Register", "Registration functionality will be implemented here.")
-
+    try:
+        subprocess.Popen(["python", "register.py"])
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {str(e)}")
 # Function to handle the upload image button click
 def upload_image():
     try:
