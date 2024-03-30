@@ -12,7 +12,7 @@ emotion_labels = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutr
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 # Initialize facial landmark detector from dlib
-landmark_detector = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+landmark_detector = dlib.shape_predictor("data/shape_predictor_68_face_landmarks (1).dat")
 
 # Start capturing video
 cap = cv2.VideoCapture(0)

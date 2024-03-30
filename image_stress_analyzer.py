@@ -1,10 +1,10 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog
-import numpy as np
+from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 import cv2
 import dlib
-from deepface import DeepFace
+import numpy as np
+from keras.models import load_model
 
 class ImageStressAnalyzer:
     def __init__(self):
@@ -44,12 +44,8 @@ class ImageStressAnalyzer:
         self.capture_button = tk.Button(self.main_frame, text="Capture Image", command=self.capture_image)
         self.capture_button.pack(pady=10)
 
-        # Initialize DeepFace model for emotion analysis
-        self.emotion_model = DeepFace.build_model("Emotion")
-        self.emotion_labels = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral']
-
         # Initialize facial landmark detector from dlib
-        self.landmark_detector = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+        self.landmark_detector = dlib.shape_predictor("data/shape_predictor_68_face_landmarks (1).dat")
 
         # Load and display the dummy images for placeholders
         self.dummy_image_left = Image.open("img/upload.jpg")
@@ -61,6 +57,12 @@ class ImageStressAnalyzer:
         self.dummy_image_right = self.dummy_image_right.resize((430, 500), Image.LANCZOS)
         self.dummy_image_right = ImageTk.PhotoImage(self.dummy_image_right)
         self.processed_image_label.config(image=self.dummy_image_right)
+
+        # Load emotion recognition model
+        self.emotion_model = load_model("fer2013_mini_XCEPTION.119-0.65.hdf5")
+
+        # Emotion labels
+        self.emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
     def upload_image(self):
         file_path = filedialog.askopenfilename(title="Select Your Image",
@@ -132,22 +134,34 @@ class ImageStressAnalyzer:
             self.processed_image_label.config(image=processed_image)
             self.processed_image_label.image = processed_image
 
-            # Example emotion analysis code (you can customize this)
-            resized_face = cv2.resize(gray_frame, (48, 48), interpolation=cv2.INTER_AREA)
-            normalized_face = resized_face / 255.0
-            reshaped_face = normalized_face.reshape(1, 48, 48, 1)
-            preds = self.emotion_model.predict(reshaped_face)[0]
-            emotion_idx = preds.argmax()
-            emotion = self.emotion_labels[emotion_idx]
-            stress_level = 1.0 - (preds[3] + preds[6])
+            # Detect faces and predict emotions
+            faces = face_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+            for (x, y, w, h) in faces:
+                face_roi = gray_frame[y:y + h, x:x + w]
+                resized_roi = cv2.resize(face_roi, (48, 48))
+                normalized_roi = resized_roi / 255.0
+                reshaped_roi = np.expand_dims(np.expand_dims(normalized_roi, -1), 0)
+                predictions = self.emotion_model.predict(reshaped_roi)
+                emotion_label = self.emotion_labels[np.argmax(predictions)]
+
+                # Display emotion label on the image
+                cv2.putText(image_cv2, emotion_label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+
+            # Display the processed image with emotion labels
+            processed_image_pil = Image.fromarray(cv2.cvtColor(image_cv2, cv2.COLOR_BGR2RGB))
+            processed_image = ImageTk.PhotoImage(processed_image_pil)
+            self.processed_image_label.config(image=processed_image)
+            self.processed_image_label.image = processed_image
 
             # Display analysis results in a message box
-            messagebox.showinfo("Analysis Results", f"Emotion: {emotion}\nStress Level: {stress_level:.2f}")
+            messagebox.showinfo("Analysis Results", f"Emotion: {emotion_label}")
+
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
     def run(self):
         self.root.mainloop()
+
 
 if __name__ == "__main__":
     app = ImageStressAnalyzer()
