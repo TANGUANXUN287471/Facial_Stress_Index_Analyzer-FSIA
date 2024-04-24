@@ -120,7 +120,7 @@ class RegisterWindow:
             return
 
         # Send data to PHP script
-        url = "http://192.168.0.104/fsia/register.php"
+        url = "http://10.144.187.198/fsia/register.php"
         data = {
             'user_name': user_name,
             'user_phone': user_phone,
@@ -140,6 +140,7 @@ class RegisterWindow:
         else:
             messagebox.showerror("Error", response.text)
 
+        self.root.destroy()
 # Create and run the registration window
 if __name__ == "__main__":
     root = tk.Tk()

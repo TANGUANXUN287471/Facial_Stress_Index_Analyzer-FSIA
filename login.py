@@ -1,11 +1,14 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
+from tkinter.ttk import Style
+
 from PIL import Image, ImageTk
 import requests
 
 class LoginWindow:
-    def __init__(self, root):
+    def __init__(self, root, on_login_success):
         self.root = root
+        self.on_login_success = on_login_success
         self.root.title("Login")
 
         # Load background image
@@ -22,6 +25,11 @@ class LoginWindow:
         # Login frame
         self.login_frame = ttk.Frame(self.canvas, padding="30")
         self.login_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+        # Set background color for the login frame
+        style = Style()
+        style.configure("TFrame", background="#ffffff")  # Change to match the background color
+        self.login_frame.config(style="TFrame")
 
         # Title label
         title_label = ttk.Label(self.login_frame, text="Login", font=("Helvetica", 22, "bold"), foreground="black")
@@ -74,23 +82,50 @@ class LoginWindow:
             return
 
         # Send data to PHP script
-        url = "http://192.168.0.104/fsia/login.php"
+        url = "http://10.144.187.198/fsia/login.php"
         data = {
             'user_email': user_email,
             'user_password': user_password
         }
         response = requests.post(url, data=data)
 
-        if response.text == "Login successful":
-            messagebox.showinfo("Success", "Login successful.")
-            # Clear entry fields after successful login
-            self.email_entry.delete(0, tk.END)
-            self.password_entry.delete(0, tk.END)
+        # Handle response
+        if "error" in response.text.lower():
+            messagebox.showerror("Error", "An error occurred. Please try again.")
         else:
-            messagebox.showerror("Error", response.text)
+            try:
+                user_data = response.json()
+                # Show popup with user data
+                messagebox.showinfo("User Data", f"User ID: {user_data['user_id']}\n"
+                                                 f"Name: {user_data['user_name']}\n"
+                                                 f"Phone: {user_data['user_phone']}\n"
+                                                 f"Email: {user_data['user_email']}")
+
+                # Store user data in session variables
+                self.root.session_data = {
+                    "user_id": user_data['user_id'],
+                    "user_name": user_data['user_name'],
+                    "user_phone": user_data['user_phone'],
+                    "user_email": user_data['user_email']
+                }
+                # Get the user ID
+                user_id = user_data['user_id']
+
+                # Call the callback function with user ID
+                self.on_login_success(user_id)
+
+                # Clear entry fields after successful login
+                self.email_entry.delete(0, tk.END)
+                self.password_entry.delete(0, tk.END)
+
+                # Close the login window
+                self.root.destroy()
+            except ValueError:
+                messagebox.showerror("Error", "Invalid response from server.")
 
 # Create and run the login window
 if __name__ == "__main__":
     root = tk.Tk()
-    LoginWindow(root)
+    LoginWindow(root, on_login_success=lambda user_id: None)  # Placeholder lambda function
     root.mainloop()
+

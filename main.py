@@ -6,34 +6,9 @@ from ttkbootstrap import Style
 from login import LoginWindow
 from register import RegisterWindow
 
-# Function to handle the login button click
-def login():
-    try:
-        subprocess.Popen(["python", "login.py"])
-    except Exception as e:
-        messagebox.showerror("Error", f"An error occurred: {str(e)}")
-
-# Function to handle the register button click
-def register():
-    try:
-        subprocess.Popen(["python", "register.py"])
-    except Exception as e:
-        messagebox.showerror("Error", f"An error occurred: {str(e)}")
-# Function to handle the upload image button click
-def upload_image():
-    try:
-        # Create an instance of the ImageStressAnalyzer class and run it
-        subprocess.Popen(["python", "image_stress_analyzer.py"])
-    except Exception as e:
-        messagebox.showerror("Error", f"An error occurred: {str(e)}")
-
-# Function to handle the real-time analysis button click
-def real_time_analysis():
-    try:
-        # Run the stress.py script using subprocess
-        subprocess.Popen(["python", "real_time_analysis.py"])
-    except Exception as e:
-        messagebox.showerror("Error", f"An error occurred: {str(e)}")
+# Function to handle the successful login event
+def on_login_success(user_id):
+    user_id_label.config(text=f"User ID: {user_id}")
 
 # Create the main window with ttkbootstrap style
 style = Style(theme="flatly")  # You can choose a different theme
@@ -80,6 +55,41 @@ button_style = {
     "borderwidth": 2,  # Border width
     "relief": "raised"  # Raised button appearance
 }
+
+# Function to handle the login button click
+def login():
+    try:
+        LoginWindow(tk.Toplevel(root), on_login_success)
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
+# Function to handle the register button click
+def register():
+    try:
+        subprocess.Popen(["python", "register.py"])
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
+# Function to handle the upload image button click
+def upload_image():
+    try:
+        # Create an instance of the ImageStressAnalyzer class and run it
+        subprocess.Popen(["python", "image_stress_analyzer.py"])
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
+# Function to handle the real-time analysis button click
+def real_time_analysis():
+    try:
+        # Run the stress.py script using subprocess
+        subprocess.Popen(["python", "real_time_analysis.py"])
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
+
+# Create a placeholder for the user_id_label
+user_id_label = tk.Label(right_frame, text="Not logged in", font=("Helvetica", 12))
+user_id_label.pack(anchor='nw', padx=20, pady=10)
 
 login_button = tk.Button(right_frame, text="Login", command=login, **button_style)
 register_button = tk.Button(right_frame, text="Register", command=register, **button_style)
