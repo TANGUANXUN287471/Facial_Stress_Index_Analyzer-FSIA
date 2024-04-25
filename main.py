@@ -3,6 +3,8 @@ import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 from ttkbootstrap import Style
+
+from historical_data_analysis import HistoricalDataAnalysis
 from login import LoginWindow
 from register import RegisterWindow
 
@@ -100,7 +102,7 @@ def real_time_analysis():
 def analysis():
     try:
         # Run the stress.py script using subprocess
-        subprocess.Popen(["python", "real_time_analysis.py"])
+        subprocess.Popen(["python", "historical_data_analysis.py", str(user_id_value)])
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
