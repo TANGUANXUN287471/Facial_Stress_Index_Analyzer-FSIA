@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import requests
 import tkinter as tk
+from tkinter import messagebox
 
 
 class HistoricalDataAnalysis:
@@ -12,7 +13,7 @@ class HistoricalDataAnalysis:
 
     def retrieve_stress_level_data(self):
         # Define the URL of the PHP backend API
-        url = "http://10.144.187.198/fsia/retrieve_stress_level.php"
+        url = "http://10.19.77.49/fsia/retrieve_stress_level.php"
 
         # Prepare the request data (user_id)
         data = {"user_id": self.user_id}
@@ -50,12 +51,12 @@ class HistoricalDataAnalysis:
             chart_window.title("Stress Level Chart")
 
             # Create a Figure and a Canvas
-            fig, ax = plt.subplots(figsize=(10, 6))
+            fig, ax = plt.subplots(figsize=(10, 7))
             canvas = FigureCanvasTkAgg(fig, master=chart_window)
             canvas.draw()
 
             # Plot the stress level chart
-            ax.plot(dates, stress_levels, marker='o', linestyle='-', label='Stress Level')
+            ax.plot(dates, stress_levels, marker='', linestyle='-', label='Stress Level')
 
             # Assign colors to different emotions
             emotion_colors = {
@@ -68,13 +69,21 @@ class HistoricalDataAnalysis:
                 'Fear': 'red'
             }
 
+            # Keep track of which emotions have been added to the legend
+            legend_entries = set()
+
             # Plot emotions as scatter points with different marker styles, colors, and sizes
             for i, (date, emotion) in enumerate(zip(dates, emotions)):
+                if emotion not in legend_entries:
+                    # Add emotion to the legend only if it hasn't been added before
+                    ax.scatter([], [], color=emotion_colors[emotion], label=emotion)
+                    legend_entries.add(emotion)
+
                 marker = 'o' if emotion in ['Happy', 'Neutral'] else 'o'
                 color = emotion_colors.get(emotion, 'purple')
                 size = 50
 
-                ax.scatter(date, stress_levels[i], color=color, marker=marker, s=size, label=emotion)
+                ax.scatter(date, stress_levels[i], color=color, marker=marker, s=size)
 
                 # Add emotion labels above each plot point
                 ax.text(date, stress_levels[i] + 0.05, emotion, ha='center', va='bottom', color=color)
@@ -96,7 +105,7 @@ class HistoricalDataAnalysis:
             # Show the window
             chart_window.mainloop()
         else:
-            print("No data available to plot the chart.")
+            messagebox.showinfo("No Data", "No data available to plot the chart.")
 
 
 if __name__ == "__main__":

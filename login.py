@@ -83,7 +83,7 @@ class LoginWindow:
             return
 
         # Send data to PHP script
-        url = "http://10.144.187.198/fsia/login.php"
+        url = "http://10.19.77.49/fsia/login.php"
         data = {
             'user_email': user_email,
             'user_password': user_password

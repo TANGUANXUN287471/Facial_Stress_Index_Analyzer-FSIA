@@ -309,7 +309,7 @@ class ImageStressAnalyzer:
 
     def send_analysis_result_to_backend(self, image_data, emotion, stress_level):
         # URL of the PHP backend script
-        url = "http://10.144.187.198/fsia/save_analysis.php"
+        url = "http://10.19.77.49/fsia/save_analysis.php"
 
         # Prepare the data to be sent
         data = {
