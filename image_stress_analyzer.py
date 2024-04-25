@@ -1,11 +1,16 @@
+import os
 import sys
 import tkinter as tk
+from datetime import datetime
 from tkinter import filedialog, messagebox
+
+import requests
 from PIL import Image, ImageTk
 import cv2
 import dlib
 import numpy as np
 from keras.models import load_model
+
 
 class ImageStressAnalyzer:
     def __init__(self, user_id):
@@ -104,10 +109,21 @@ class ImageStressAnalyzer:
 
             key = cv2.waitKey(1)
             if key == 32:  # Spacebar key code
-                cv2.imwrite("captured_image.jpg", frame)
+                # Generate a unique filename based on current timestamp and user ID
+                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                file_name = f"captured_image_user_{self.user_id}_{timestamp}.jpg"
+                file_path = os.path.join("captured_images", file_name)
+                cv2.imwrite(file_path, frame)  # Save the captured image locally
                 cap.release()
                 cv2.destroyAllWindows()
-                self.process_selected_image("captured_image.jpg")
+
+                # Process the captured image and retrieve emotion and stress level
+                emotion, stress_level = self.process_selected_image(file_path)
+
+                # Check if user is logged in before prompting to save to database
+                if self.user_id == 0:
+                    messagebox.showinfo("Save to Database",
+                                        "User is not logged in. Analysis result can only be viewed.")
                 break
 
         cap.release()
@@ -170,10 +186,19 @@ class ImageStressAnalyzer:
             self.processed_image_label.image = processed_image
 
             # Display analysis results in a message box
-            messagebox.showinfo("Analysis Results", f"Emotion: {emotion_label}\nStress Level: {stress_level:.2f}")
+            result_message = (f"Emotion: {emotion_label}\nStress Level: {stress_level:.2f}\nDo you want to save the "
+                              f"analysis result?")
+
+            if self.user_id != 0 and messagebox.askyesno("Analysis Results", result_message):
+                # If the user is logged in and chooses to save the analysis result, send data to backend
+                self.send_analysis_result_to_backend(file_path, emotion_label, stress_level)
+            else:
+                messagebox.showinfo("Analysis Results", f"Emotion: {emotion_label}\nStress Level: {stress_level:.2f}")
 
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
+        return emotion_label, stress_level
 
     def estimate_stress_level(self, landmarks, emotion_label):
         # Define weights for different facial landmarks based on their relevance to stress
@@ -282,6 +307,28 @@ class ImageStressAnalyzer:
 
         return normalized_area
 
+    def send_analysis_result_to_backend(self, image_data, emotion, stress_level):
+        # URL of the PHP backend script
+        url = "http://10.144.187.198/fsia/save_analysis.php"
+
+        # Prepare the data to be sent
+        data = {
+            "user_id": self.user_id,
+            "image_data": image_data,  # You may need to convert image_data to a suitable format
+            "emotion": emotion,
+            "stress_level": stress_level
+        }
+
+        # Send an HTTP POST request to the PHP backend
+        try:
+            response = requests.post(url, data=data)
+            if response.status_code == 200:
+                print("Analysis results sent to backend successfully.")
+            else:
+                print("Failed to send analysis results to backend.")
+        except Exception as e:
+            print(f"An error occurred while sending data to backend: {e}")
+
     def run(self):
         self.root.mainloop()
 
@@ -300,4 +347,3 @@ if __name__ == "__main__":
 
     app = ImageStressAnalyzer(user_id)
     app.run()
-
