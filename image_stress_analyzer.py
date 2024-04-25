@@ -1,3 +1,4 @@
+import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
@@ -6,9 +7,9 @@ import dlib
 import numpy as np
 from keras.models import load_model
 
-
 class ImageStressAnalyzer:
-    def __init__(self):
+    def __init__(self, user_id):
+        self.user_id = user_id
         self.root = tk.Tk()
         self.root.title("Image Stress Analysis")
 
@@ -20,6 +21,14 @@ class ImageStressAnalyzer:
         self.title_label = tk.Label(self.main_frame, text="Capture Your Image for Stress Analysis",
                                     font=("Helvetica", 18), pady=20)
         self.title_label.pack()
+
+        # Create a label to display the user ID
+        self.user_id_label = tk.Label(self.main_frame, text=f"User ID: {user_id}", font=("Helvetica", 12))
+        self.user_id_label.pack()
+
+        # Check if user is logged in
+        if user_id == 0:
+            self.user_id_label.config(text="User is not logged in")
 
         # Create a frame to contain the image labels
         self.image_frame = tk.Frame(self.main_frame)
@@ -209,7 +218,8 @@ class ImageStressAnalyzer:
 
         return stress_level
 
-    def calculate_brow_furrow(self, landmarks):
+    @staticmethod
+    def calculate_brow_furrow(landmarks):
         # Calculate brow furrow based on the distance between eyebrow landmarks
         left_eyebrow = [landmarks.part(i) for i in range(17, 22)]  # Left eyebrow landmarks
         right_eyebrow = [landmarks.part(i) for i in range(22, 27)]  # Right eyebrow landmarks
@@ -227,7 +237,8 @@ class ImageStressAnalyzer:
 
         return stress_level
 
-    def calculate_jaw_tension(self, landmarks):
+    @staticmethod
+    def calculate_jaw_tension(landmarks):
         # Calculate jaw tension based on the distance between jawline landmarks
         jaw_points = [(landmarks.part(i).x, landmarks.part(i).y) for i in range(0, 17)]
 
@@ -242,7 +253,8 @@ class ImageStressAnalyzer:
 
         return normalized_tension
 
-    def calculate_eye_expression(self, landmarks):
+    @staticmethod
+    def calculate_eye_expression(landmarks):
         # Calculate eye expression based on the position of eye landmarks
         left_eye_openness = landmarks.part(42).y - landmarks.part(38).y
         right_eye_openness = landmarks.part(47).y - landmarks.part(43).y
@@ -255,7 +267,8 @@ class ImageStressAnalyzer:
 
         return normalized_expression
 
-    def calculate_mouth_shape(self, landmarks):
+    @staticmethod
+    def calculate_mouth_shape(landmarks):
         # Calculate mouth shape based on the position of mouth landmarks
         mouth_width = landmarks.part(54).x - landmarks.part(48).x
         mouth_height = (landmarks.part(66).y - landmarks.part(62).y +
@@ -274,5 +287,17 @@ class ImageStressAnalyzer:
 
 
 if __name__ == "__main__":
-    app = ImageStressAnalyzer()
+    # Retrieve user ID from command-line arguments
+    if len(sys.argv) != 2:
+        print("Usage: python image_stress_analyzer.py <user_id>")
+        sys.exit(1)
+
+    try:
+        user_id = int(sys.argv[1])
+    except ValueError:
+        print("Error: User ID must be an integer.")
+        sys.exit(1)
+
+    app = ImageStressAnalyzer(user_id)
     app.run()
+

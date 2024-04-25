@@ -5,6 +5,7 @@ from tkinter.ttk import Style
 from PIL import Image, ImageTk
 import requests
 
+
 class LoginWindow:
     def __init__(self, root, on_login_success):
         self.root = root
@@ -123,9 +124,9 @@ class LoginWindow:
             except ValueError:
                 messagebox.showerror("Error", "Invalid response from server.")
 
+
 # Create and run the login window
 if __name__ == "__main__":
     root = tk.Tk()
     LoginWindow(root, on_login_success=lambda user_id: None)  # Placeholder lambda function
     root.mainloop()
-

@@ -6,16 +6,22 @@ from ttkbootstrap import Style
 from login import LoginWindow
 from register import RegisterWindow
 
+global user_id_value
+user_id_value = 0
+
 # Function to handle the successful login event
 def on_login_success(user_id):
+    global user_id_value
+    user_id_value = user_id
     user_id_label.config(text=f"User ID: {user_id}")
+
 
 # Create the main window with ttkbootstrap style
 style = Style(theme="flatly")  # You can choose a different theme
 
 # Configure main window dimensions
-window_width = 650
-window_height = 500
+window_width = 850
+window_height = 650
 root = style.master
 root.title("Stress Analysis Application")
 root.geometry(f"{window_width}x{window_height}")
@@ -26,9 +32,9 @@ style.configure("TFrame", background="#4a90e2")  # Set background color for the 
 main_frame.pack(fill=tk.BOTH, expand=True)
 
 # Load and display an image on the left side
-image_path = "img/stressEmotion.jpg"  # Replace with the path to your image
+image_path = "img/fsia.png"  # Replace with the path to your image
 image = Image.open(image_path)
-image = image.resize((200, 200))  # Resize the image without ANTIALIAS
+image = image.resize((450, 500))  # Resize the image without ANTIALIAS
 image = ImageTk.PhotoImage(image)
 
 image_label = tk.Label(main_frame, image=image)
@@ -51,10 +57,11 @@ button_style = {
     "width": 25,
     "height": 2,
     "bg": "#007acc",  # Blue background color
-    "fg": "white",    # White text color
+    "fg": "white",  # White text color
     "borderwidth": 2,  # Border width
     "relief": "raised"  # Raised button appearance
 }
+
 
 # Function to handle the login button click
 def login():
@@ -63,6 +70,7 @@ def login():
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
+
 # Function to handle the register button click
 def register():
     try:
@@ -70,13 +78,15 @@ def register():
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
+
 # Function to handle the upload image button click
 def upload_image():
     try:
         # Create an instance of the ImageStressAnalyzer class and run it
-        subprocess.Popen(["python", "image_stress_analyzer.py"])
+        subprocess.Popen(["python", "image_stress_analyzer.py", str(user_id_value)])
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
 
 # Function to handle the real-time analysis button click
 def real_time_analysis():
@@ -87,19 +97,29 @@ def real_time_analysis():
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
 
+def analysis():
+    try:
+        # Run the stress.py script using subprocess
+        subprocess.Popen(["python", "real_time_analysis.py"])
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
+
 # Create a placeholder for the user_id_label
-user_id_label = tk.Label(right_frame, text="Not logged in", font=("Helvetica", 12))
+user_id_label = tk.Label(right_frame, text=" Welcome Guest, Please sign up or login :", font=("Helvetica", 12))
 user_id_label.pack(anchor='nw', padx=20, pady=10)
 
 login_button = tk.Button(right_frame, text="Login", command=login, **button_style)
 register_button = tk.Button(right_frame, text="Register", command=register, **button_style)
 upload_button = tk.Button(right_frame, text="Upload Image", command=upload_image, **button_style)
 real_time_button = tk.Button(right_frame, text="Real-time Analysis", command=real_time_analysis, **button_style)
+analysis_button = tk.Button(right_frame, text="Analysis", command=analysis, **button_style)
 
 login_button.pack(pady=15)
 register_button.pack(pady=15)
 upload_button.pack(pady=15)
 real_time_button.pack(pady=15)
+analysis_button.pack(pady=15)
 
 # Start the main loop
 root.mainloop()
