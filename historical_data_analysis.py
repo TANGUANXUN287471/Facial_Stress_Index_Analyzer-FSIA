@@ -1,10 +1,10 @@
+import tkinter as tk
+from tkinter import messagebox
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 import pandas as pd
 import requests
-import tkinter as tk
-from tkinter import messagebox
 from PIL import Image, ImageTk
 
 from ipconfig import ip
@@ -13,7 +13,6 @@ from ipconfig import ip
 class HistoricalDataAnalysis:
     def __init__(self, user_id):
         self.user_id = user_id
-        self.image_index = 0
 
     def retrieve_stress_level_data(self):
         # Define the URL of the PHP backend API
@@ -54,9 +53,21 @@ class HistoricalDataAnalysis:
             chart_window = tk.Tk()
             chart_window.title("Stress Level Chart")
 
+            # Create a main frame
+            main_frame = tk.Frame(chart_window)
+            main_frame.pack(fill=tk.BOTH, expand=True)
+
+            # Create a chart frame
+            chart_frame = tk.Frame(main_frame, bg="white")
+            chart_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+            # Create a sidebar frame
+            sidebar_frame = tk.Frame(main_frame, bg="lightgray", padx=10, pady=10)
+            sidebar_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+
             # Create a Figure and a Canvas
-            fig, ax = plt.subplots(figsize=(10, 7))
-            canvas = FigureCanvasTkAgg(fig, master=chart_window)
+            fig, ax = plt.subplots(figsize=(8, 6))
+            canvas = FigureCanvasTkAgg(fig, master=chart_frame)
             canvas.draw()
 
             # Plot the stress level chart
@@ -103,34 +114,26 @@ class HistoricalDataAnalysis:
             ax.grid(True)
             ax.legend()
 
-            # Add a button to select date and view image
-            select_button = tk.Button(chart_window, text="Select Date", command=lambda: self.select_date(dates, image_data))
-            select_button.pack(side=tk.BOTTOM)
+            # Add a listbox to the sidebar frame for date selection
+            date_listbox = tk.Listbox(sidebar_frame, bg="lightgray", bd=0, highlightthickness=0)
+            date_listbox.pack(fill=tk.BOTH, expand=True)
 
-            # Pack the canvas into the window
+            # Add dates to the listbox
+            for date in dates:
+                date_listbox.insert(tk.END, date.strftime('%Y-%m-%d'))
+
+            # Add a button to view selected image
+            view_button = tk.Button(sidebar_frame, text="View Image", bg="lightgray", bd=0, highlightthickness=0,
+                                    command=lambda: self.view_image(date_listbox.get(tk.ACTIVE), dates, image_data))
+            view_button.pack(fill=tk.X)
+
+            # Pack the canvas into the chart frame
             canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
             # Show the window
             chart_window.mainloop()
         else:
             messagebox.showinfo("No Data", "No data available to plot the chart.")
-
-    def select_date(self, dates, image_data):
-        # Create a new window for image selection
-        select_window = tk.Toplevel()
-        select_window.title("Select Date")
-
-        # Create a listbox to display dates
-        date_listbox = tk.Listbox(select_window)
-        date_listbox.pack()
-
-        # Add dates to the listbox
-        for date in dates:
-            date_listbox.insert(tk.END, date.strftime('%Y-%m-%d'))
-
-        # Add a button to view selected image
-        view_button = tk.Button(select_window, text="View Image", command=lambda: self.view_image(date_listbox.get(tk.ACTIVE), dates, image_data))
-        view_button.pack()
 
     def view_image(self, selected_date, dates, image_data):
         # Find the index of the selected date
