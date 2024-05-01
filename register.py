@@ -4,6 +4,9 @@ from PIL import Image, ImageTk
 import requests
 import re
 
+from ipconfig import ip
+
+
 class RegisterWindow:
     def __init__(self, root):
         self.root = root
@@ -120,7 +123,7 @@ class RegisterWindow:
             return
 
         # Send data to PHP script
-        url = "http://10.19.77.49/fsia/register.php"
+        url = "http://" + ip + "/fsia/register.php"
         data = {
             'user_name': user_name,
             'user_phone': user_phone,

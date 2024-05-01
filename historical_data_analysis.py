@@ -5,15 +5,19 @@ import pandas as pd
 import requests
 import tkinter as tk
 from tkinter import messagebox
+from PIL import Image, ImageTk
+
+from ipconfig import ip
 
 
 class HistoricalDataAnalysis:
     def __init__(self, user_id):
         self.user_id = user_id
+        self.image_index = 0
 
     def retrieve_stress_level_data(self):
         # Define the URL of the PHP backend API
-        url = "http://10.19.77.49/fsia/retrieve_stress_level.php"
+        url = "http://"+ip+"/fsia/retrieve_stress_level.php"
 
         # Prepare the request data (user_id)
         data = {"user_id": self.user_id}
@@ -99,6 +103,10 @@ class HistoricalDataAnalysis:
             ax.grid(True)
             ax.legend()
 
+            # Add a button to select date and view image
+            select_button = tk.Button(chart_window, text="Select Date", command=lambda: self.select_date(dates, image_data))
+            select_button.pack(side=tk.BOTTOM)
+
             # Pack the canvas into the window
             canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
@@ -106,6 +114,44 @@ class HistoricalDataAnalysis:
             chart_window.mainloop()
         else:
             messagebox.showinfo("No Data", "No data available to plot the chart.")
+
+    def select_date(self, dates, image_data):
+        # Create a new window for image selection
+        select_window = tk.Toplevel()
+        select_window.title("Select Date")
+
+        # Create a listbox to display dates
+        date_listbox = tk.Listbox(select_window)
+        date_listbox.pack()
+
+        # Add dates to the listbox
+        for date in dates:
+            date_listbox.insert(tk.END, date.strftime('%Y-%m-%d'))
+
+        # Add a button to view selected image
+        view_button = tk.Button(select_window, text="View Image", command=lambda: self.view_image(date_listbox.get(tk.ACTIVE), dates, image_data))
+        view_button.pack()
+
+    def view_image(self, selected_date, dates, image_data):
+        # Find the index of the selected date
+        index = [i for i, date in enumerate(dates) if date.strftime('%Y-%m-%d') == selected_date]
+
+        if index:
+            # Create a new window for image display
+            image_window = tk.Toplevel()
+            image_window.title("Selected Image")
+
+            # Load the selected image
+            image_path = image_data[index[0]]  # Assuming image_data is a list of image paths
+            image = Image.open(image_path)
+            photo = ImageTk.PhotoImage(image)
+
+            # Display the image
+            label = tk.Label(image_window, image=photo)
+            label.image = photo  # Keep a reference to avoid garbage collection
+            label.pack()
+        else:
+            messagebox.showinfo("No Image", "No image available for the selected date.")
 
 
 if __name__ == "__main__":

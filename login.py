@@ -5,6 +5,8 @@ from tkinter.ttk import Style
 from PIL import Image, ImageTk
 import requests
 
+from ipconfig import ip
+
 
 class LoginWindow:
     def __init__(self, root, on_login_success):
@@ -83,7 +85,7 @@ class LoginWindow:
             return
 
         # Send data to PHP script
-        url = "http://10.19.77.49/fsia/login.php"
+        url = "http://" + ip + "/fsia/login.php"
         data = {
             'user_email': user_email,
             'user_password': user_password

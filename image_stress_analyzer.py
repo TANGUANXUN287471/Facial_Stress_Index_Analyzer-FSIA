@@ -11,6 +11,8 @@ import dlib
 import numpy as np
 from keras.models import load_model
 
+from ipconfig import ip
+
 
 class ImageStressAnalyzer:
     def __init__(self, user_id):
@@ -309,7 +311,7 @@ class ImageStressAnalyzer:
 
     def send_analysis_result_to_backend(self, image_data, emotion, stress_level):
         # URL of the PHP backend script
-        url = "http://10.19.77.49/fsia/save_analysis.php"
+        url = "http://" + ip + "/fsia/save_analysis.php"
 
         # Prepare the data to be sent
         data = {
