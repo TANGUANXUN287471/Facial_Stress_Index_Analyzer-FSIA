@@ -6,16 +6,70 @@ from ttkbootstrap import Style
 
 from login import LoginWindow
 
-
-global user_id_value
-user_id_value = 0
-
 # Function to handle the successful login event
 def on_login_success(user_id):
     global user_id_value
     user_id_value = user_id
     user_id_label.config(text=f"User ID: {user_id}")
+    # Hide login and register buttons, show logout button
+    login_button.pack_forget()
+    register_button.pack_forget()
+    logout_button.pack(anchor='nw', padx=20, pady=10)
 
+# Function to handle the logout event
+def logout():
+    global user_id_value
+    user_id_value = 0
+    user_id_label.config(text=" Welcome Guest, Please sign up or login :")
+    # Forget all buttons and re-add them in the original order
+    for button in [login_button, register_button, upload_button, real_time_button, analysis_button, logout_button]:
+        button.pack_forget()
+    login_button.pack(pady=15)
+    register_button.pack(pady=15)
+    upload_button.pack(pady=15)
+    real_time_button.pack(pady=15)
+    analysis_button.pack(pady=15)
+
+# Function to handle the login button click
+def login():
+    try:
+        LoginWindow(tk.Toplevel(root), on_login_success)
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
+# Function to handle the register button click
+def register():
+    try:
+        subprocess.Popen(["python", "register.py"])
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
+# Function to handle the upload image button click
+def upload_image():
+    try:
+        # Create an instance of the ImageStressAnalyzer class and run it
+        subprocess.Popen(["python", "image_stress_analyzer.py", str(user_id_value)])
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
+# Function to handle the real-time analysis button click
+def real_time_analysis():
+    try:
+        # Run the stress.py script using subprocess
+        subprocess.Popen(["python", "real_time_analysis.py"])
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
+def analysis():
+    try:
+        # Run the stress.py script using subprocess
+        subprocess.Popen(["python", "historical_data_analysis.py", str(user_id_value)])
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
+# Initialize user_id_value to 0
+global user_id_value
+user_id_value = 0
 
 # Create the main window with ttkbootstrap style
 style = Style(theme="flatly")  # You can choose a different theme
@@ -63,55 +117,14 @@ button_style = {
     "relief": "raised"  # Raised button appearance
 }
 
-
-# Function to handle the login button click
-def login():
-    try:
-        LoginWindow(tk.Toplevel(root), on_login_success)
-    except Exception as e:
-        messagebox.showerror("Error", f"An error occurred: {str(e)}")
-
-
-# Function to handle the register button click
-def register():
-    try:
-        subprocess.Popen(["python", "register.py"])
-    except Exception as e:
-        messagebox.showerror("Error", f"An error occurred: {str(e)}")
-
-
-# Function to handle the upload image button click
-def upload_image():
-    try:
-        # Create an instance of the ImageStressAnalyzer class and run it
-        subprocess.Popen(["python", "image_stress_analyzer.py", str(user_id_value)])
-    except Exception as e:
-        messagebox.showerror("Error", f"An error occurred: {str(e)}")
-
-
-# Function to handle the real-time analysis button click
-def real_time_analysis():
-    try:
-        # Run the stress.py script using subprocess
-        subprocess.Popen(["python", "real_time_analysis.py"])
-    except Exception as e:
-        messagebox.showerror("Error", f"An error occurred: {str(e)}")
-
-
-def analysis():
-    try:
-        # Run the stress.py script using subprocess
-        subprocess.Popen(["python", "historical_data_analysis.py", str(user_id_value)])
-    except Exception as e:
-        messagebox.showerror("Error", f"An error occurred: {str(e)}")
-
-
 # Create a placeholder for the user_id_label
 user_id_label = tk.Label(right_frame, text=" Welcome Guest, Please sign up or login :", font=("Helvetica", 12))
 user_id_label.pack(anchor='nw', padx=20, pady=10)
 
 login_button = tk.Button(right_frame, text="Login", command=login, **button_style)
 register_button = tk.Button(right_frame, text="Register", command=register, **button_style)
+logout_button = tk.Button(right_frame, text="Logout", command=logout, **button_style)
+
 upload_button = tk.Button(right_frame, text="Upload Image", command=upload_image, **button_style)
 real_time_button = tk.Button(right_frame, text="Real-time Analysis", command=real_time_analysis, **button_style)
 analysis_button = tk.Button(right_frame, text="Analysis", command=analysis, **button_style)

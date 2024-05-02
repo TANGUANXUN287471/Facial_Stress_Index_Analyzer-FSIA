@@ -12,7 +12,7 @@ class GetStartPage:
         self.root.geometry("850x650")
 
         # Load and display the background image
-        background_image = Image.open("img/art.png")  # Replace with your image file
+        background_image = Image.open("img/white.jpg")  # Replace with your image file
         background_image = background_image.resize((850, 650))  # Resize the image
         self.background_photo = ImageTk.PhotoImage(background_image)
         background_label = tk.Label(self.root, image=self.background_photo)
@@ -116,6 +116,7 @@ class GetStartPage:
     def continue_as_guest(self):
         # Continue as guest
         subprocess.Popen(["python", "main.py"])
+        self.root.destroy()
 
     def change_description(self, direction):
         # Update the description text and current content index label
