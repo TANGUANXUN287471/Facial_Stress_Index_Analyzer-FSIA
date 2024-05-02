@@ -1,9 +1,8 @@
 import subprocess
 import tkinter as tk
-from tkinter import ttk
-
+from tkinter import messagebox, ttk
 from PIL import Image, ImageTk
-
+from login import LoginWindow
 
 class GetStartPage:
     def __init__(self):
@@ -32,7 +31,7 @@ class GetStartPage:
         self.content_frame.pack(padx=20, pady=10, fill=tk.BOTH, expand=True)
 
         # Create a text widget for the description
-        self.description_text = tk.Text(self.content_frame, height=12, width=60, wrap=tk.WORD, font=("Helvetica", 14))
+        self.description_text = tk.Text(self.content_frame, height=14, width=60, wrap=tk.WORD, font=("Helvetica", 14))
         self.description_text.pack(pady=10)
 
         # Add buttons for changing the description content and display current content index
@@ -58,7 +57,7 @@ class GetStartPage:
         self.image2 = self.image2.resize((650, 350))  # Resize image to fit content frame
 
         self.image3 = Image.open("img/face.png")  # Replace with your image file
-        self.image3 = self.image3.resize((650, 350))  # Resize image to fit content frame
+        self.image3 = self.image3.resize((650, 480))  # Resize image to fit content frame
 
         # Start a timer to automatically change the description
         self.descriptions = [
@@ -87,7 +86,8 @@ class GetStartPage:
         button_container.pack(side=tk.BOTTOM, pady=(20, 30))  # Added extra padding below the buttons
 
         button_padding = 10
-        login_button = ttk.Button(button_container, text="Login", style="Main.TButton", command=self.open_login_window)
+        login_button = ttk.Button(button_container, text="Login", style="Main.TButton",
+                                  command=self.login_window)
         login_button.pack(side=tk.LEFT, padx=button_padding)
 
         register_button = ttk.Button(button_container, text="Register", style="Main.TButton",
@@ -105,8 +105,7 @@ class GetStartPage:
         self.style.configure("Main.TButton", font=("Helvetica", 14), background="lightblue", foreground="black")
         self.style.map("Main.TButton", background=[("active", "lightcyan")])
 
-    def open_login_window(self):
-        # Open the login window
+    def login_window(self):
         subprocess.Popen(["python", "login.py"])
 
     def open_register_window(self):

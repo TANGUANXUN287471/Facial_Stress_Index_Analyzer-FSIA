@@ -6,15 +6,17 @@ from ttkbootstrap import Style
 
 from login import LoginWindow
 
+
 # Function to handle the successful login event
-def on_login_success(user_id):
+def on_login_success(user_id, user_name):
     global user_id_value
     user_id_value = user_id
-    user_id_label.config(text=f"User ID: {user_id}")
+    user_id_label.config(text=f"Welcome {user_name}, User ID: {user_id}")
     # Hide login and register buttons, show logout button
     login_button.pack_forget()
     register_button.pack_forget()
     logout_button.pack(anchor='nw', padx=20, pady=10)
+
 
 # Function to handle the logout event
 def logout():
@@ -30,6 +32,7 @@ def logout():
     real_time_button.pack(pady=15)
     analysis_button.pack(pady=15)
 
+
 # Function to handle the login button click
 def login():
     try:
@@ -37,12 +40,14 @@ def login():
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
+
 # Function to handle the register button click
 def register():
     try:
         subprocess.Popen(["python", "register.py"])
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
 
 # Function to handle the upload image button click
 def upload_image():
@@ -52,6 +57,7 @@ def upload_image():
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
+
 # Function to handle the real-time analysis button click
 def real_time_analysis():
     try:
@@ -60,12 +66,14 @@ def real_time_analysis():
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
+
 def analysis():
     try:
         # Run the stress.py script using subprocess
         subprocess.Popen(["python", "historical_data_analysis.py", str(user_id_value)])
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
 
 # Initialize user_id_value to 0
 global user_id_value
@@ -134,6 +142,7 @@ register_button.pack(pady=15)
 upload_button.pack(pady=15)
 real_time_button.pack(pady=15)
 analysis_button.pack(pady=15)
+
 
 # Start the main loop
 root.mainloop()

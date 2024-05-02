@@ -1,18 +1,19 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
-from tkinter.ttk import Style
-
 from PIL import Image, ImageTk
 import requests
-
 from ipconfig import ip
-
 
 class LoginWindow:
     def __init__(self, root, on_login_success):
+        self.top = None
         self.root = root
         self.on_login_success = on_login_success
         self.root.title("Login")
+
+        # Initialize email and password entry fields
+        self.email_entry = None
+        self.password_entry = None
 
         # Load background image
         background_image = Image.open("img/registration.jpg")
@@ -30,7 +31,7 @@ class LoginWindow:
         self.login_frame.place(relx=0.5, rely=0.5, anchor="center")
 
         # Set background color for the login frame
-        style = Style()
+        style = ttk.Style()
         style.configure("TFrame", background="#ffffff")  # Change to match the background color
         self.login_frame.config(style="TFrame")
 
@@ -41,9 +42,6 @@ class LoginWindow:
         # Common style for labels and entries
         label_style = {"font": ("Georgia", 10), "foreground": "black"}
         entry_style = {"font": ("Helvetica", 10), "background": "white", "foreground": "black"}
-
-        # Define icon size
-        icon_size = (15, 18)  # Change icon size
 
         # Email input
         email_icon = Image.open("img/email_icon.png").resize((15, 18))
@@ -113,9 +111,10 @@ class LoginWindow:
                 }
                 # Get the user ID
                 user_id = user_data['user_id']
+                user_name = user_data['user_name']
 
                 # Call the callback function with user ID
-                self.on_login_success(user_id)
+                self.on_login_success(user_id, user_name)
 
                 # Clear entry fields after successful login
                 self.email_entry.delete(0, tk.END)
@@ -125,7 +124,6 @@ class LoginWindow:
                 self.root.destroy()
             except ValueError:
                 messagebox.showerror("Error", "Invalid response from server.")
-
 
 # Create and run the login window
 if __name__ == "__main__":
