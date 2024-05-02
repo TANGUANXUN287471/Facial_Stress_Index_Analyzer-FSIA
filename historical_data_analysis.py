@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
@@ -16,7 +16,7 @@ class HistoricalDataAnalysis:
 
     def retrieve_stress_level_data(self):
         # Define the URL of the PHP backend API
-        url = "http://"+ip+"/fsia/retrieve_stress_level.php"
+        url = "http://" + ip + "/fsia/retrieve_stress_level.php"
 
         # Prepare the request data (user_id)
         data = {"user_id": self.user_id}
@@ -59,11 +59,11 @@ class HistoricalDataAnalysis:
 
             # Create a chart frame
             chart_frame = tk.Frame(main_frame, bg="white")
-            chart_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+            chart_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
             # Create a sidebar frame
-            sidebar_frame = tk.Frame(main_frame, bg="lightgray", padx=10, pady=10)
-            sidebar_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+            sidebar_frame = tk.Frame(main_frame, bg="lightblue", padx=10, pady=10)
+            sidebar_frame.pack(side=tk.RIGHT, fill=tk.Y)
 
             # Create a Figure and a Canvas
             fig, ax = plt.subplots(figsize=(8, 6))
@@ -114,8 +114,12 @@ class HistoricalDataAnalysis:
             ax.grid(True)
             ax.legend()
 
+            # Add a label for selecting images by dates
+            select_label = tk.Label(sidebar_frame, text="Select Image by Date", bg="lightblue", pady=5, font=('Arial', 12, "bold"))
+            select_label.pack(fill=tk.X)
+
             # Add a listbox to the sidebar frame for date selection
-            date_listbox = tk.Listbox(sidebar_frame, bg="lightgray", bd=0, highlightthickness=0)
+            date_listbox = tk.Listbox(sidebar_frame, bg="white", bd=1, selectbackground="#f0f0f0", selectforeground="black", font=('Arial', 10), exportselection=False)
             date_listbox.pack(fill=tk.BOTH, expand=True)
 
             # Add dates to the listbox
@@ -123,7 +127,7 @@ class HistoricalDataAnalysis:
                 date_listbox.insert(tk.END, date.strftime('%Y-%m-%d'))
 
             # Add a button to view selected image
-            view_button = tk.Button(sidebar_frame, text="View Image", bg="lightgray", bd=0, highlightthickness=0,
+            view_button = tk.Button(sidebar_frame, text="View Image", bg="teal", fg="white", bd=1, font=('Arial', 12),
                                     command=lambda: self.view_image(date_listbox.get(tk.ACTIVE), dates, image_data))
             view_button.pack(fill=tk.X)
 

@@ -4,9 +4,8 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 from ttkbootstrap import Style
 
-from historical_data_analysis import HistoricalDataAnalysis
 from login import LoginWindow
-from register import RegisterWindow
+
 
 global user_id_value
 user_id_value = 0
