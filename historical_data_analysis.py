@@ -137,7 +137,7 @@ class HistoricalDataAnalysis:
             # Show the window
             chart_window.mainloop()
         else:
-            messagebox.showinfo("No Data", "No data available to plot the chart.")
+            messagebox.showinfo("No Data", "No data available. User is not login.")
 
     def view_image(self, selected_date, dates, image_data):
         # Find the index of the selected date
