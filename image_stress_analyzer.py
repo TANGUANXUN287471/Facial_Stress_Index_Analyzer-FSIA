@@ -9,7 +9,7 @@ from PIL import Image, ImageTk
 import cv2
 import dlib
 import numpy as np
-from keras.models import load_model
+from deepface import DeepFace
 
 from ipconfig import ip
 
@@ -63,8 +63,9 @@ class ImageStressAnalyzer:
         self.capture_button = tk.Button(self.main_frame, text="Capture Image", command=self.capture_image)
         self.capture_button.pack(pady=10)
 
-        # Initialize facial landmark detector from dlib
-        self.landmark_detector = dlib.shape_predictor("data/shape_predictor_68_face_landmarks (1).dat")
+        # Initialize Dlib's face detector and landmark predictor
+        self.face_detector = dlib.get_frontal_face_detector()
+        self.landmark_detector = dlib.shape_predictor("data/shape_predictor_68_face_landmarks.dat")
 
         # Load and display the dummy images for placeholders
         self.dummy_image_left = Image.open("img/upload.jpg")
@@ -76,12 +77,6 @@ class ImageStressAnalyzer:
         self.dummy_image_right = self.dummy_image_right.resize((430, 500), Image.LANCZOS)
         self.dummy_image_right = ImageTk.PhotoImage(self.dummy_image_right)
         self.processed_image_label.config(image=self.dummy_image_right)
-
-        # Load emotion recognition model
-        self.emotion_model = load_model("fer2013_mini_XCEPTION.119-0.65.hdf5")
-
-        # Emotion labels
-        self.emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
     def upload_image(self):
         file_path = filedialog.askopenfilename(title="Select Your Image",
@@ -115,6 +110,7 @@ class ImageStressAnalyzer:
                 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
                 file_name = f"captured_image_user_{self.user_id}_{timestamp}.jpg"
                 file_path = os.path.join("captured_images", file_name)
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
                 cv2.imwrite(file_path, frame)  # Save the captured image locally
                 cap.release()
                 cv2.destroyAllWindows()
@@ -147,41 +143,36 @@ class ImageStressAnalyzer:
 
             # Process the image with facial landmarks
             gray_frame = cv2.cvtColor(image_cv2, cv2.COLOR_BGR2GRAY)
-            face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-            faces = face_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+            faces = self.face_detector(gray_frame)
 
-            for (x, y, w, h) in faces:
-                dlib_rect = dlib.rectangle(x, y, x + w, y + h)
-                landmarks = self.landmark_detector(gray_frame, dlib_rect)
+            emotion_label = 'neutral'
+            stress_level = 0.0
+
+            for face in faces:
+                landmarks = self.landmark_detector(gray_frame, face)
 
                 # Draw facial landmarks on the image with larger circles
                 for i in range(68):  # Assuming you're using the 68-point facial landmarks model
                     x, y = landmarks.part(i).x, landmarks.part(i).y
                     cv2.circle(image_cv2, (x, y), 2, (0, 255, 0), -1)  # Larger circles
 
-            # Display the processed image with facial landmarks
-            processed_image_pil = Image.fromarray(cv2.cvtColor(image_cv2, cv2.COLOR_BGR2RGB))
-            processed_image = ImageTk.PhotoImage(processed_image_pil)
-            self.processed_image_label.config(image=processed_image)
-            self.processed_image_label.image = processed_image
+                # Detect faces and predict emotions using DeepFace
+                face_roi = image_cv2[face.top():face.bottom(), face.left():face.right()]
+                result = DeepFace.analyze(face_roi, actions=['emotion'], enforce_detection=False)
 
-            # Detect faces and predict emotions
-            faces = face_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-            for (x, y, w, h) in faces:
-                face_roi = gray_frame[y:y + h, x:x + w]
-                resized_roi = cv2.resize(face_roi, (48, 48))
-                normalized_roi = resized_roi / 255.0
-                reshaped_roi = np.expand_dims(np.expand_dims(normalized_roi, -1), 0)
-                predictions = self.emotion_model.predict(reshaped_roi)
-                emotion_label = self.emotion_labels[np.argmax(predictions)]
+                # Check if 'dominant_emotion' key exists in result
+                if 'dominant_emotion' in result[0]:
+                    emotion_label = result[0]['dominant_emotion']
+                else:
+                    raise ValueError("Unable to detect emotion from the provided image.")
 
                 # Display emotion label on the image
-                cv2.putText(image_cv2, emotion_label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+                cv2.putText(image_cv2, emotion_label, (face.left(), face.top() - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
 
                 # Estimate stress level based on facial landmarks and emotion label
                 stress_level = self.estimate_stress_level(landmarks, emotion_label)
 
-            # Display the processed image with emotion labels
+            # Display the processed image with facial landmarks
             processed_image_pil = Image.fromarray(cv2.cvtColor(image_cv2, cv2.COLOR_BGR2RGB))
             processed_image = ImageTk.PhotoImage(processed_image_pil)
             self.processed_image_label.config(image=processed_image)
@@ -193,121 +184,83 @@ class ImageStressAnalyzer:
 
             if self.user_id != 0 and messagebox.askyesno("Analysis Results", result_message):
                 # If the user is logged in and chooses to save the analysis result, send data to backend
-                self.send_analysis_result_to_backend(file_path, emotion_label, stress_level)
+                with open(file_path, "rb") as image_file:
+                    image_data = image_file.read()
+                self.send_analysis_result_to_backend(image_data, emotion_label, stress_level)
             else:
                 messagebox.showinfo("Analysis Results", f"Emotion: {emotion_label}\nStress Level: {stress_level:.2f}")
 
-        except Exception as e:
-            messagebox.showerror("Error", f"An error occurred: {str(e)}")
+            return emotion_label, stress_level
 
-        return emotion_label, stress_level
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while processing the image: {str(e)}")
+            return None, None
 
     def estimate_stress_level(self, landmarks, emotion_label):
-        # Define weights for different facial landmarks based on their relevance to stress
-        weights = {
-            'brow_furrow': 0.25,
-            'jaw_tension': 0.25,
-            'eye_expression': 0.25,
-            'mouth_shape': 0.25
-        }
-
-        # Initialize stress level
-        stress_level = 0.0
-
-        # Calculate stress level based on facial landmarks
-        # 1. Brow Furrow
+        # Calculate individual features based on landmarks
         brow_furrow = self.calculate_brow_furrow(landmarks)
-        stress_level += weights['brow_furrow'] * brow_furrow
-
-        # 2. Jaw Tension
         jaw_tension = self.calculate_jaw_tension(landmarks)
-        stress_level += weights['jaw_tension'] * jaw_tension
-
-        # 3. Eye Expression
         eye_expression = self.calculate_eye_expression(landmarks)
-        stress_level += weights['eye_expression'] * eye_expression
-
-        # 4. Mouth Shape
         mouth_shape = self.calculate_mouth_shape(landmarks)
-        stress_level += weights['mouth_shape'] * mouth_shape
+
+        # Normalize the calculated features to be between 0 and 1
+        brow_furrow = np.clip(brow_furrow / 10.0, 0, 1)
+        jaw_tension = np.clip(jaw_tension / 20.0, 0, 1)
+        eye_expression = np.clip(eye_expression / 15.0, 0, 1)
+        mouth_shape = np.clip(mouth_shape / 15.0, 0, 1)
+
+        # Aggregate the normalized features
+        landmark_stress_level = (brow_furrow + jaw_tension + eye_expression + mouth_shape) / 4.0
+
+        # Base emotion stress level, initially neutral
+        emotion_stress_level = 0.0
 
         # Adjust stress level based on predicted emotion
-        if emotion_label in ['Angry', 'Fear']:
-            stress_level += 0.7  # Increase stress level for negative emotions
-        elif emotion_label == 'Sad':
-            stress_level += 0.5
-        elif emotion_label == 'Surprise':
-            stress_level += 0.3  # Slight increase for surprise
-        elif emotion_label == 'Disgust':
-            stress_level += 0.15
-        elif emotion_label in ['Happy', 'Neutral']:
-            stress_level += 0.0
+        emotion_adjustments = {
+            'angry': 0.8,
+            'fear': 0.75,
+            'sad': 0.5,
+            'surprise': 0.35,
+            'disgust': 0.20,
+            'neutral': 0.05,
+            'happy': 0.00,
 
-        return stress_level
+        }
 
-    @staticmethod
-    def calculate_brow_furrow(landmarks):
-        # Calculate brow furrow based on the distance between eyebrow landmarks
-        left_eyebrow = [landmarks.part(i) for i in range(17, 22)]  # Left eyebrow landmarks
-        right_eyebrow = [landmarks.part(i) for i in range(22, 27)]  # Right eyebrow landmarks
+        emotion_label_lower = emotion_label.lower()
+        if emotion_label_lower in emotion_adjustments:
+            emotion_stress_level += emotion_adjustments[emotion_label_lower]
 
-        # Calculate the distance between the endpoints of left and right eyebrows
-        left_eyebrow_end = np.array([left_eyebrow[0].x, left_eyebrow[0].y])
-        right_eyebrow_start = np.array([right_eyebrow[0].x, right_eyebrow[0].y])
-        brow_furrow_distance = np.linalg.norm(left_eyebrow_end - right_eyebrow_start)
+        # Combine landmark stress level and emotion stress level with respective weights
+        combined_stress_level = (0.2 * landmark_stress_level) + (0.8 * emotion_stress_level)
 
-        # Normalize the distance to a scale of 0 to 1
-        normalized_distance = brow_furrow_distance / landmarks.rect.width()
+        return combined_stress_level
 
-        # Map the normalized distance to the stress level range (0 to 1)
-        stress_level = 1.0 - normalized_distance
+    def calculate_brow_furrow(self, landmarks):
+        left_brow = (landmarks.part(21).x, landmarks.part(21).y)
+        right_brow = (landmarks.part(22).x, landmarks.part(22).y)
+        brow_distance = np.linalg.norm(np.array(left_brow) - np.array(right_brow))
+        return brow_distance
 
-        return stress_level
+    def calculate_jaw_tension(self, landmarks):
+        left_jaw = (landmarks.part(3).x, landmarks.part(3).y)
+        right_jaw = (landmarks.part(13).x, landmarks.part(13).y)
+        jaw_distance = np.linalg.norm(np.array(left_jaw) - np.array(right_jaw))
+        return jaw_distance
 
-    @staticmethod
-    def calculate_jaw_tension(landmarks):
-        # Calculate jaw tension based on the distance between jawline landmarks
-        jaw_points = [(landmarks.part(i).x, landmarks.part(i).y) for i in range(0, 17)]
+    def calculate_eye_expression(self, landmarks):
+        left_eye = (landmarks.part(37).y, landmarks.part(41).y)
+        right_eye = (landmarks.part(43).y, landmarks.part(47).y)
+        left_eye_openness = np.abs(left_eye[0] - left_eye[1])
+        right_eye_openness = np.abs(right_eye[0] - right_eye[1])
+        eye_openness = (left_eye_openness + right_eye_openness) / 2.0
+        return eye_openness
 
-        # Calculate the distances between consecutive jawline points
-        jaw_distances = [np.linalg.norm(np.array(jaw_points[i]) - np.array(jaw_points[i + 1])) for i in range(16)]
-
-        # Average the distances to get jaw tension
-        jaw_tension = np.mean(jaw_distances)
-
-        # Normalize the jaw tension to a scale of 0 to 1
-        normalized_tension = jaw_tension / landmarks.rect.width()
-
-        return normalized_tension
-
-    @staticmethod
-    def calculate_eye_expression(landmarks):
-        # Calculate eye expression based on the position of eye landmarks
-        left_eye_openness = landmarks.part(42).y - landmarks.part(38).y
-        right_eye_openness = landmarks.part(47).y - landmarks.part(43).y
-
-        # Average the eye openness values
-        eye_expression = (left_eye_openness + right_eye_openness) / 2
-
-        # Normalize eye expression to a scale of 0 to 1
-        normalized_expression = eye_expression / landmarks.rect.height()
-
-        return normalized_expression
-
-    @staticmethod
-    def calculate_mouth_shape(landmarks):
-        # Calculate mouth shape based on the position of mouth landmarks
-        mouth_width = landmarks.part(54).x - landmarks.part(48).x
-        mouth_height = (landmarks.part(66).y - landmarks.part(62).y +
-                        landmarks.part(57).y - landmarks.part(60).y) / 2
-
-        # Calculate the area of the mouth rectangle
-        mouth_area = mouth_width * mouth_height
-
-        # Normalize mouth area to a scale of 0 to 1
-        normalized_area = mouth_area / (landmarks.rect.width() * landmarks.rect.height())
-
-        return normalized_area
+    def calculate_mouth_shape(self, landmarks):
+        top_lip = landmarks.part(51).y
+        bottom_lip = landmarks.part(57).y
+        mouth_openness = np.abs(top_lip - bottom_lip)
+        return mouth_openness
 
     def send_analysis_result_to_backend(self, image_data, emotion, stress_level):
         # URL of the PHP backend script
