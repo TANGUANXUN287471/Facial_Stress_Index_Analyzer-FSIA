@@ -10,7 +10,7 @@ In today's fast-paced world, stress has become an unavoidable part of daily life
 2. **Real-time Analysis**: It analyzes the captured images in real-time to detect stress levels.
 3. **Stress Level Pattern Analysis Over 30 Days**: It provides an overview of stress patterns over a 30-day period, helping users understand their stress trends and triggers.
 
-![image](img/example(1).png) ![image](img/example2(1).png)
+![image](img/example.png) ![image](img/example2.png)
 
 ---
 
